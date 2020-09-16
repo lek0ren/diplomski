@@ -34,6 +34,10 @@ def shuffleNames(allVariables):
     """Returns new variable names
     """
     usedLetters = set()
+    for var in allVariables:
+        usedLetters.add(var)
+
+        
     for variable in allVariables:
         randomLetter = random.choice(string.ascii_lowercase) 
         while randomLetter == variable or randomLetter in usedLetters:
@@ -50,6 +54,7 @@ allVariables = dict()
 foundBegin = False
 startedLoop = False
 numberOfLoopLines = 0
+depth = 0
 
 
 for line in inpupFile:
@@ -61,8 +66,8 @@ for line in inpupFile:
         
 
         print(f"c for({matched.group('iterVar')} = {matched.group('iterVal')};{matched.group('iterVar')} < {matched.group('endVar')};{matched.group('iterVar')}{ '++' if matched.group('inc') == 'to' else '--'})")
-        top = SubElement(currentScope,"loop",{'type':'for', 'iterVal':matched.group('iterVal'), 'iterVar':matched.group('iterVar'), 'endVar':matched.group('endVar'), 'inc': '++' if matched.group('inc') == 'to' else '--'})
-        
+        top = SubElement(currentScope,"loop",{'type':'for', 'iterVal':matched.group('iterVal'), 'iterVar':matched.group('iterVar'), 'endVar':matched.group('endVar'), 'inc': '++' if matched.group('inc') == 'to' else '--', 'depth': str(depth)})
+        depth += 1
         allScopes.append(top)
         currentScope = top
 
@@ -82,7 +87,7 @@ for line in inpupFile:
     if matched is not None:
 
         print(f"c {matched.group('var1')} = {matched.group('var2')};") 
-        top = SubElement(currentScope,"instruction",{'var1':matched.group('var1'), 'var2':matched.group('var2')})
+        top = SubElement(currentScope,"instruction",{'var1':matched.group('var1'), 'var2':matched.group('var2'), 'depth': str(depth)})
 
 
         allVariables = extractVariables(allVariables,matched.group('var1'))
@@ -94,6 +99,7 @@ for line in inpupFile:
     if matched is not None:
         print(f"1end of scope for {currentScope}")
         currentScope = allScopes.pop()
+        depth -= 1
 
     #search for begin
     matched = re.search(r'[b|B]egin',line)
@@ -106,8 +112,9 @@ for line in inpupFile:
     matched = re.search(r'[Rr]epeat',line)
     if matched is not None:
         print(f'c do')
-        top = SubElement(currentScope,"loop",{'type':'repeat'})
         
+        top = SubElement(currentScope,"loop",{'type':'repeat', 'depth': str(depth)})
+        depth += 1
         allScopes.append(top)
         currentScope = top
 
@@ -118,6 +125,7 @@ for line in inpupFile:
     #search for until
     matched = re.search(r'[Uu]ntil (?P<iterVar>.+?(?==|>|<|>=|<=|<>))(?P<op>=|>|<|>=|<=|<>])(?P<endVar>.+)',line)
     if matched is not None:
+        depth -= 1
         print(f"c while({matched.group('iterVar')} {matched.group('op')} {matched.group('endVar')})")
         currentScope.attrib['iterVar']=matched.group('iterVar')
         currentScope.attrib['op']=matched.group('op')
@@ -151,9 +159,56 @@ print(allVariables)
 
 tree = ElementTree.ElementTree(allScopes[0])
 
+compiledRegexLetters = dict()
+
+for letter in allVariables:
+    compiledRegexLetters[letter] = re.compile(letter)
+
 for elem in tree.iter():
     if elem.tag == 'instruction':
         elem.attrib['var1']=allVariables[elem.attrib['var1']]
-
+        for var in allVariables:
+            elem.attrib['var2'] = re.sub(var,allVariables[var],elem.attrib['var2'])
+        
+    if elem.tag == 'loop':
+        elem.attrib['iterVar']=allVariables[elem.attrib['iterVar']]
+        for var in allVariables:
+            elem.attrib['endVar'] = re.sub(var,allVariables[var],elem.attrib['endVar'])
+        if(elem.attrib['type'] == 'for'):
+            for var in allVariables:
+                elem.attrib['iterVal'] = re.sub(var,allVariables[var],elem.attrib['iterVal'])
+            
 
 print(prettify(tree.getroot()))
+
+lastPadding = 0
+curlyBracket = ''
+padding = 0
+
+for elem in tree.iter():
+    lastPadding = padding
+    cString = ''
+    if elem.tag == 'instruction' or elem.tag == 'instruction':
+        padding = int(elem.attrib['depth'])
+        print(f"padding: {padding} ; lastPadding: {lastPadding}")
+        if padding > lastPadding:
+            curlyBracket = '{'
+        elif padding < lastPadding:
+            curlyBracket = '}'
+        else:
+            curlyBracket = ''
+        print(curlyBracket)
+        cString = ''
+        for i in range(padding):
+            cString += '\t'
+    if elem.tag == 'instruction':
+        
+        print( cString + f"{elem.attrib['var1']} = {elem.attrib['var2']};") 
+    
+    if elem.tag == 'loop':
+        if elem.attrib['type'] == 'for':
+            print( cString + f"for({elem.attrib['iterVar']} = {elem.attrib['iterVal']};{elem.attrib['iterVar']} { '<' if elem.attrib['inc'] == '++' else '>='} {elem.attrib['endVar']};{elem.attrib['iterVar']}{elem.attrib['inc']}) {curlyBracket}")
+
+
+    if curlyBracket == '}':
+        print('}')
