@@ -1,8 +1,10 @@
 n:=2;
- for j:=1 to k do
+ for j := 1 downto k do
   Begin
   i:=0;
    Repeat
-    n:=n+2; i:=i+4
+    n:=n+2;
+     i:=i+4;
    Until n=i 
   End  
+
