@@ -1,11 +1,14 @@
-for i:= n downto 1 do 
-    begin
-        k:= 0; 
-        j:= 1;
-        while (j <= n) do 
-            begin
-                k:= k + 1;
-                j:= j + k;
-                s:= s + i*j;
-            end;
-    end;
+i:= 1;
+j:= 1;
+k:= n;
+while i < n do
+begin
+    i:= i + 1;
+    c:= j * 2;
+    d:= k / 2;
+    while j < k do
+        begin
+            k:= k / 2;
+            j:= j * 2;
+        end;
+end;

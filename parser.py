@@ -44,7 +44,10 @@ def shuffleNames(allVariables):
         while randomLetter == variable or randomLetter in usedLetters:
             randomLetter = random.choice(string.ascii_lowercase)
         usedLetters.add(randomLetter)
-        allVariables[variable]=randomLetter
+        if variable == 'n':
+            allVariables[variable] = 'n'
+        else:
+            allVariables[variable]=randomLetter
     
     return allVariables
 
@@ -101,7 +104,8 @@ for line in inpupFile:
     matched = re.search(r'[eE]nd',line)
     if matched is not None:
         print(f"1end of scope for {currentScope}")
-        currentScope = allScopes.pop()
+        allScopes.pop()
+        currentScope = allScopes[-1]
         depth -= 1
 
     #search for begin
@@ -140,7 +144,8 @@ for line in inpupFile:
 
         currentScope.attrib['endVar']=matched.group('endVar')
 
-        currentScope = allScopes.pop()
+        allScopes.pop()
+        currentScope = allScopes[-1]
 
 
     #search for while loop
@@ -155,10 +160,12 @@ for line in inpupFile:
     #search for if statement
     matched = re.search(r'[iI]f( +|)(?P<condition>(.+?(?=\sthen)))',line)
     if matched is not None:
+        print(currentScope)
         top = SubElement(currentScope,"if",{'condition':matched.group('condition'), 'depth': str(depth)})
         depth += 1
         allScopes.append(top)
         currentScope = top
+        print(currentScope)
 
     #handeling of one line for loop
     if not foundBegin and numberOfLoopLines == 1:
@@ -189,6 +196,8 @@ for elem in tree.iter():
         for var in allVariables:
             elem.attrib['var1'] = re.sub(var,allVariables[var],elem.attrib['var1'])
             if elem.attrib['var2'] != 'true' and elem.attrib['var2'] != 'false':
+                elem.attrib['var2'] = re.sub('div','/',elem.attrib['var2'])
+                elem.attrib['var2'] = re.sub('mod','%',elem.attrib['var2'])
                 elem.attrib['var2'] = re.sub(var,allVariables[var],elem.attrib['var2'])
             else:
                 elem.attrib['var2'] = re.sub('true','1',elem.attrib['var2'])
@@ -243,12 +252,20 @@ for elem in tree.iter():
             code_snippet += '\t' * (padding - 1) + curlyBracket + '\r\n'
             pandingBrackets.append('}')
         elif padding < lastPadding:
-            if(doWhilelines[padding]):
+            if doWhilelines.get(padding) is not None:
                 print('\t' * padding + doWhilelines[padding])
                 code_snippet += '\t' * padding + doWhilelines[padding] + '\r\n'
             curlyBracket = '}'
         else:
             curlyBracket = ''
+
+        if curlyBracket == '}':
+            if doWhilelines.get(padding) is not None:
+               doWhilelines.pop(padding)
+            else:
+                print( '\t' * (lastPadding -  1) + '}')
+                code_snippet += '\t' * (lastPadding -  1) + '}' +  '\r\n' 
+                pandingBrackets.pop()
         
     #instruction
     if elem.tag == 'instruction':
@@ -259,8 +276,8 @@ for elem in tree.iter():
     if elem.tag == 'loop':
         #for loop
         if elem.attrib['type'] == 'for':
-            print( '\t' * padding + f"for({elem.attrib['iterVar']} = {elem.attrib['iterVal']};{elem.attrib['iterVar']} { '<' if elem.attrib['inc'] == '++' else '>='} {elem.attrib['endVar']};{elem.attrib['iterVar']}{elem.attrib['inc']})")
-            code_snippet += '\t' * padding + f"for({elem.attrib['iterVar']} = {elem.attrib['iterVal']};{elem.attrib['iterVar']} { '<' if elem.attrib['inc'] == '++' else '>='} {elem.attrib['endVar']};{elem.attrib['iterVar']}{elem.attrib['inc']})" +  '\r\n' 
+            print( '\t' * padding + f"for({elem.attrib['iterVar']} = {elem.attrib['iterVal']}; {elem.attrib['iterVar']} { '<' if elem.attrib['inc'] == '++' else '>='} {elem.attrib['endVar']}; {elem.attrib['iterVar']}{elem.attrib['inc']})")
+            code_snippet += '\t' * padding + f"for({elem.attrib['iterVar']} = {elem.attrib['iterVal']}; {elem.attrib['iterVar']} { '<' if elem.attrib['inc'] == '++' else '>='} {elem.attrib['endVar']}; {elem.attrib['iterVar']}{elem.attrib['inc']})" +  '\r\n' 
 
         #repeat loop
         if elem.attrib['type'] == 'repeat':
@@ -273,18 +290,14 @@ for elem in tree.iter():
             print( '\t' * padding + f"while({elem.attrib['condition']})")
             code_snippet += '\t' * padding + f"while({elem.attrib['condition']})" +  '\r\n' 
 
+    
+
+
+
+
     if elem.tag == 'if':
         print( '\t' * padding + f"if({elem.attrib['condition']})")
         code_snippet += '\t' * padding + f"if({elem.attrib['condition']})" +  '\r\n' 
-
-
-    if curlyBracket == '}':
-        if(doWhilelines[padding]):
-            doWhilelines.pop(padding)
-        else:
-            print( '\t' * padding + '}')
-            code_snippet += '\t' * padding + '}' +  '\r\n' 
-            pandingBrackets.pop()
 
 for idx,bracket in enumerate(pandingBrackets):
     print((len(pandingBrackets) - 1 - idx) * '\t' + '}')

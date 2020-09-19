@@ -51,17 +51,18 @@ a) n b) n^3/2 (c) n^2
 i:= 1;
 j:= 1;
 k:= n;
-while (i <n)do
+while i < n do
 begin
-    i:= i +1;
-    c:= j *2;
-    d:= k /2;
-    while (j <k)do
+    i:= i + 1;
+    c:= j * 2;
+    d:= k / 2;
+    while j < k do
         begin
-            k:= k /2;
-            j:= j *2;
+            k:= k / 2;
+            j:= j * 2;
         end;
 end;
+
 
 (a) n b) n^3/2 c) n^2
 
