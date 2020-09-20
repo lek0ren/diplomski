@@ -6,29 +6,15 @@ from xml.dom import minidom
 import string
 import random
 
-inpupFile = open("zadaci/textZadatka.txt", "r")
+
 
 
 def prettify(elem):
-    """Return a pretty-printed XML string for the Element.
-    """
-    rough_string = ElementTree.tostring(elem, 'utf-8')
-    reparsed = minidom.parseString(rough_string)
-    return reparsed.toprettyxml(indent="  ")
-
-
-def extractVariables(allVariables,variables):
-    """Return a dictionary of all variables extracted from a string
-    """
-    
-    splitedVariables = re.split(r'[\s\[\]+\-\\*/\d]+',variables)
-    print(splitedVariables)
-    for variable in splitedVariables:
-        if variable.islower() and variable != '' and variable != 'true' and variable != 'false':
-            if not variable in allVariables:
-                allVariables[variable] = ''
-    return allVariables
-
+        """Return a pretty-printed XML string for the Element.
+        """
+        rough_string = ElementTree.tostring(elem, 'utf-8')
+        reparsed = minidom.parseString(rough_string)
+        return reparsed.toprettyxml(indent="  ")
 
 
 def shuffleNames(allVariables):
@@ -51,261 +37,227 @@ def shuffleNames(allVariables):
     
     return allVariables
 
+class Parser:
+    def __init__(self, filename):
+        self.filename = filename
+        self.currentScope = Element("program")
+        self.allScopes = [self.currentScope]
+        self.allVariables = dict()
+
+    def parse(self):
+        inpupFile = open("zadaci/" + self.filename, "r")
 
 
-currentScope = Element("program")
-allScopes = [currentScope]
-allVariables = dict()
-
-foundBegin = False
-startedLoop = False
-numberOfLoopLines = 0
-depth = 0
+        foundBegin = False
+        startedLoop = False
+        numberOfLoopLines = 0
+        depth = 0
 
 
-for line in inpupFile:
-    print(line)
+        for line in inpupFile:
+            print(line)
 
-    #search for for loop
-    matched = re.search(r'for (?P<iterVar>\w+)( *|):=( *|)(?P<iterVal>.+?(?= to| downto))( +|)(?P<inc>to|downto)( +|)(?P<endVar>.+?(?= do))',line)
-    if matched is not None:
-        
+            #search for for loop
+            matched = re.search(r'for (?P<iterVar>\w+)( *|):=( *|)(?P<iterVal>.+?(?= to| downto))( +|)(?P<inc>to|downto)( +|)(?P<endVar>.+?(?= do))',line)
+            if matched is not None:
+                
 
-        print(f"c for({matched.group('iterVar')} = {matched.group('iterVal')};{matched.group('iterVar')} < {matched.group('endVar')};{matched.group('iterVar')}{ '++' if matched.group('inc') == 'to' else '--'})")
-        top = SubElement(currentScope,"loop",{'type':'for', 'iterVal':matched.group('iterVal'), 'iterVar':matched.group('iterVar'), 'endVar':matched.group('endVar'), 'inc': '++' if matched.group('inc') == 'to' else '--', 'depth': str(depth)})
-        depth += 1
-        allScopes.append(top)
-        currentScope = top
+                print(f"c for({matched.group('iterVar')} = {matched.group('iterVal')};{matched.group('iterVar')} < {matched.group('endVar')};{matched.group('iterVar')}{ '++' if matched.group('inc') == 'to' else '--'})")
+                top = SubElement(self.currentScope,"loop",{'type':'for', 'iterVal':matched.group('iterVal'), 'iterVar':matched.group('iterVar'), 'endVar':matched.group('endVar'), 'inc': '++' if matched.group('inc') == 'to' else '--', 'depth': str(depth)})
+                depth += 1
+                self.allScopes.append(top)
+                self.currentScope = top
 
-        allVariables = extractVariables(allVariables,matched.group('iterVal'))
-        allVariables = extractVariables(allVariables,matched.group('iterVar'))
-        allVariables = extractVariables(allVariables,matched.group('endVar'))
+                self.allVariables = self.extractVariables(matched.group('iterVal'))
+                self.allVariables = self.extractVariables(matched.group('iterVar'))
+                self.allVariables = self.extractVariables(matched.group('endVar'))
 
-        
-        #foundBegin = re.search(r'begin',line) is not None
-        #startedLoop = not foundBegin
-        #numberOfLoopLines = 0
+                
+                #foundBegin = re.search(r'begin',line) is not None
+                #startedLoop = not foundBegin
+                #numberOfLoopLines = 0
 
-        print(prettify(top))
+                print(prettify(top))
 
-    #search for instruction
-    matched = re.search(r'(?P<var1>(?=[^\s]+).+?(?=:=))( *|):=( *|)(?P<var2>.+?(?=;))',line)
-    if matched is not None:
+            #search for instruction
+            matched = re.search(r'(?P<var1>(?=[^\s]+).+?(?=:=))( *|):=( *|)(?P<var2>.+?(?=;))',line)
+            if matched is not None:
 
-        print(f"c {matched.group('var1')} = {matched.group('var2')};") 
-        top = SubElement(currentScope,"instruction",{'var1':matched.group('var1'), 'var2':matched.group('var2'), 'depth': str(depth)})
-
-
-        allVariables = extractVariables(allVariables,matched.group('var1'))
-        allVariables = extractVariables(allVariables,matched.group('var2'))
-    
-
-    #search for end
-    matched = re.search(r'[eE]nd',line)
-    if matched is not None:
-        print(f"1end of scope for {currentScope}")
-        allScopes.pop()
-        currentScope = allScopes[-1]
-        depth -= 1
-
-    #search for begin
-    matched = re.search(r'[b|B]egin',line)
-    #if matched is not None:
-        #startedLoop = True
-        #foundBegin = True
-    
-
-    #search for repeat
-    matched = re.search(r'[Rr]epeat',line)
-    if matched is not None:
-        print(f'c do')
-        
-        top = SubElement(currentScope,"loop",{'type':'repeat', 'depth': str(depth)})
-        depth += 1
-        allScopes.append(top)
-        currentScope = top
-
-        #foundBegin = True
-        #startedLoop = True
-        numberOfLoopLines = 2
-
-    #search for until
-    matched = re.search(r'[Uu]ntil (?P<iterVar>.+?(?==|>|<|>=|<=|<>))(?P<op>=|>|<|>=|<=|<>])(?P<endVar>.+)',line)
-    if matched is not None:
-        depth -= 1
-        print(f"c while({matched.group('iterVar')} {matched.group('op')} {matched.group('endVar')})")
-        currentScope.attrib['iterVar']=matched.group('iterVar')
-        currentScope.attrib['op']=matched.group('op')
-
-        if matched.group('op') == "=":
-                currentScope.attrib['op']='=='
-        if matched.group('op') == '<>':
-                currentScope.attrib['op']='!='
-
-        currentScope.attrib['endVar']=matched.group('endVar')
-
-        allScopes.pop()
-        currentScope = allScopes[-1]
+                print(f"c {matched.group('var1')} = {matched.group('var2')};") 
+                top = SubElement(self.currentScope,"instruction",{'var1':matched.group('var1'), 'var2':matched.group('var2'), 'depth': str(depth)})
 
 
-    #search for while loop
-    matched = re.search(r'[wW]hile( +|)(?P<condition>.+?(?=\sdo))',line)
-    if matched is not None:
-        top = SubElement(currentScope,"loop",{'type':'while', 'condition':matched.group('condition'), 'depth': str(depth)})
-        depth += 1
-        allScopes.append(top)
-        currentScope = top
-
-
-    #search for if statement
-    matched = re.search(r'[iI]f( +|)(?P<condition>(.+?(?=\sthen)))',line)
-    if matched is not None:
-        print(currentScope)
-        top = SubElement(currentScope,"if",{'condition':matched.group('condition'), 'depth': str(depth)})
-        depth += 1
-        allScopes.append(top)
-        currentScope = top
-        print(currentScope)
-
-    #handeling of one line for loop
-    if not foundBegin and numberOfLoopLines == 1:
-        print(f"3end of scope for {currentScope}")
-        currentScope = allScopes.pop()
-        #startedLoop = False
-        
-    if startedLoop:
-        numberOfLoopLines+=1
-
-print(prettify(allScopes[0]))
-print(allVariables)
-
-
-allVariables = shuffleNames(allVariables)
-
-print(allVariables)
-
-tree = ElementTree.ElementTree(allScopes[0])
-
-compiledRegexLetters = dict()
-
-for letter in allVariables:
-    compiledRegexLetters[letter] = re.compile('\b(?!false|true)\b' + letter)
-
-for elem in tree.iter():
-    if elem.tag == 'instruction':
-        for var in allVariables:
-            elem.attrib['var1'] = re.sub(var,allVariables[var],elem.attrib['var1'])
-            if elem.attrib['var2'] != 'true' and elem.attrib['var2'] != 'false':
-                elem.attrib['var2'] = re.sub('div','/',elem.attrib['var2'])
-                elem.attrib['var2'] = re.sub('mod','%',elem.attrib['var2'])
-                elem.attrib['var2'] = re.sub(var,allVariables[var],elem.attrib['var2'])
-            else:
-                elem.attrib['var2'] = re.sub('true','1',elem.attrib['var2'])
-                elem.attrib['var2'] = re.sub('false','0',elem.attrib['var2'])
-        
-    if elem.tag == 'loop':
-        if elem.attrib['type'] != 'while':
-            for var in allVariables:
-                elem.attrib['endVar'] = re.sub(var,allVariables[var],elem.attrib['endVar'])
-                elem.attrib['iterVar']=re.sub(var,allVariables[var],elem.attrib['iterVar'])
-            if(elem.attrib['type'] == 'for'):
-                for var in allVariables:
-                    elem.attrib['iterVal'] = re.sub(var,allVariables[var],elem.attrib['iterVal'])
-        else:
-            elem.attrib['condition'] = re.sub('and','&&',elem.attrib['condition'])
-            elem.attrib['condition'] = re.sub('or','||',elem.attrib['condition'])
-            elem.attrib['condition'] = re.sub(' =',' ==',elem.attrib['condition'])
-            elem.attrib['condition'] = re.sub('<>','!=',elem.attrib['condition'])
-            for var in allVariables:
-                elem.attrib['condition'] = re.sub(var,allVariables[var],elem.attrib['condition'])
-
-
-    if elem.tag == 'if':
-        elem.attrib['condition'] = re.sub('and','&&',elem.attrib['condition'])
-        elem.attrib['condition'] = re.sub('or','||',elem.attrib['condition'])
-        elem.attrib['condition'] = re.sub(' =',' ==',elem.attrib['condition'])
-        elem.attrib['condition'] = re.sub('<>','!=',elem.attrib['condition'])
-        for var in allVariables:
-                elem.attrib['condition'] = re.sub(var,allVariables[var],elem.attrib['condition'])
+                self.allVariables = self.extractVariables(matched.group('var1'))
+                self.allVariables = self.extractVariables(matched.group('var2'))
             
 
-print(prettify(tree.getroot()))
+            #search for end
+            matched = re.search(r'[eE]nd',line)
+            if matched is not None:
+                print(f"1end of scope for {self.currentScope}")
+                self.allScopes.pop()
+                self.currentScope = self.allScopes[-1]
+                depth -= 1
 
-lastPadding = 0
-curlyBracket = ''
-padding = 0
-pandingBrackets = []
-doWhilelines = dict()
+            #search for begin
+            matched = re.search(r'[b|B]egin',line)
+            #if matched is not None:
+                #startedLoop = True
+                #foundBegin = True
+            
 
-code_snippet = ''
+            #search for repeat
+            matched = re.search(r'[Rr]epeat',line)
+            if matched is not None:
+                print(f'c do')
+                
+                top = SubElement(self.currentScope,"loop",{'type':'repeat', 'depth': str(depth)})
+                depth += 1
+                self.allScopes.append(top)
+                self.currentScope = top
 
-#printing in c
-for elem in tree.iter():
-    lastPadding = padding
-    if elem.tag == 'instruction' or elem.tag == 'instruction' or elem.tag == 'if':
-        padding = int(elem.attrib['depth'])
+                #foundBegin = True
+                #startedLoop = True
+                numberOfLoopLines = 2
+
+            #search for until
+            matched = re.search(r'[Uu]ntil (?P<iterVar>.+?(?==|>=|<=|<>|>|<))(?P<op>==|>=|<=|<>|>|<)(?P<endVar>.+(?=;))',line)
+            if matched is not None:
+                depth -= 1
+                print(f"c while({matched.group('iterVar')} {matched.group('op')} {matched.group('endVar')})")
+                self.currentScope.attrib['iterVar']=matched.group('iterVar')
+                self.currentScope.attrib['op']=matched.group('op')
+
+                if matched.group('op') == "=":
+                        self.currentScope.attrib['op']='=='
+                if matched.group('op') == '<>':
+                        self.currentScope.attrib['op']='!='
+
+                self.currentScope.attrib['endVar']=matched.group('endVar')
+
+                self.allScopes.pop()
+                self.currentScope = self.allScopes[-1]
 
 
-        if padding > lastPadding:
-            curlyBracket = '{'
-            print( '\t' * (padding - 1) + curlyBracket)
-            code_snippet += '\t' * (padding - 1) + curlyBracket + '\r\n'
-            pandingBrackets.append('}')
-        elif padding < lastPadding:
-            if doWhilelines.get(padding) is not None:
-                print('\t' * padding + doWhilelines[padding])
-                code_snippet += '\t' * padding + doWhilelines[padding] + '\r\n'
-            curlyBracket = '}'
-        else:
-            curlyBracket = ''
+            #search for while loop
+            matched = re.search(r'[wW]hile( +|)(?P<condition>.+?(?=\sdo))',line)
+            if matched is not None:
+                top = SubElement(self.currentScope,"loop",{'type':'while', 'condition':matched.group('condition'), 'depth': str(depth)})
+                depth += 1
+                self.allScopes.append(top)
+                self.currentScope = top
 
-        if curlyBracket == '}':
-            if doWhilelines.get(padding) is not None:
-               doWhilelines.pop(padding)
-            else:
-                print( '\t' * (lastPadding -  1) + '}')
-                code_snippet += '\t' * (lastPadding -  1) + '}' +  '\r\n' 
-                pandingBrackets.pop()
+
+            #search for if statement
+            matched = re.search(r'[iI]f( +|)(?P<condition>(.+?(?=\sthen)))',line)
+            if matched is not None:
+                print(self.currentScope)
+                top = SubElement(self.currentScope,"if",{'condition':matched.group('condition'), 'depth': str(depth)})
+                depth += 1
+                self.allScopes.append(top)
+                self.currentScope = top
+                print(self.currentScope)
+
+            #search for answer
+            matched = re.search(r'answer:\s*(?P<answer>.+)',line)
+            if matched is not None:
+                self.allScopes[0].attrib['answer'] = matched.group('answer')
+
+            #handeling of one line for loop
+            if not foundBegin and numberOfLoopLines == 1:
+                print(f"3end of scope for {self.currentScope}")
+                self.currentScope = self.allScopes.pop()
+                #startedLoop = False
+                
+            if startedLoop:
+                numberOfLoopLines+=1
         
-    #instruction
-    if elem.tag == 'instruction':
+        print(self.allVariables)
+
+        self.allVariables = shuffleNames(self.allVariables)
+
+
+        for elem in self.allScopes[0].iter():
+            if elem.tag == 'instruction':
+                for var in self.allVariables:
+                    elem.attrib['var1'] = re.sub(var,self.allVariables[var],elem.attrib['var1'])
+                    if elem.attrib['var2'] != 'true' and elem.attrib['var2'] != 'false':
+                        elem.attrib['var2'] = re.sub('div','/',elem.attrib['var2'])
+                        elem.attrib['var2'] = re.sub('mod','%',elem.attrib['var2'])
+                        elem.attrib['var2'] = re.sub(var,self.allVariables[var],elem.attrib['var2'])
+                    else:
+                        elem.attrib['var2'] = re.sub('true','1',elem.attrib['var2'])
+                        elem.attrib['var2'] = re.sub('false','0',elem.attrib['var2'])
+
+            if elem.tag == 'loop':
+                if elem.attrib['type'] != 'while':
+                    for var in self.allVariables:
+                        elem.attrib['endVar'] = re.sub(var,self.allVariables[var],elem.attrib['endVar'])
+                        elem.attrib['iterVar']=re.sub(var,self.allVariables[var],elem.attrib['iterVar'])
+                    if(elem.attrib['type'] == 'for'):
+                        for var in self.allVariables:
+                            elem.attrib['iterVal'] = re.sub(var,self.allVariables[var],elem.attrib['iterVal'])
+                else:
+                    elem.attrib['condition'] = re.sub('and','&&',elem.attrib['condition'])
+                    elem.attrib['condition'] = re.sub('or','||',elem.attrib['condition'])
+                    elem.attrib['condition'] = re.sub(' =',' ==',elem.attrib['condition'])
+                    elem.attrib['condition'] = re.sub('<>','!=',elem.attrib['condition'])
+                    for var in self.allVariables:
+                        elem.attrib['condition'] = re.sub(var,self.allVariables[var],elem.attrib['condition'])
+
+
+            if elem.tag == 'if':
+                elem.attrib['condition'] = re.sub('and','&&',elem.attrib['condition'])
+                elem.attrib['condition'] = re.sub('or','||',elem.attrib['condition'])
+                elem.attrib['condition'] = re.sub(' =',' ==',elem.attrib['condition'])
+                elem.attrib['condition'] = re.sub('<>','!=',elem.attrib['condition'])
+                for var in self.allVariables:
+                        elem.attrib['condition'] = re.sub(var,self.allVariables[var],elem.attrib['condition'])
+                    
+
+
+
+
+        print(prettify(self.allScopes[0]))
         
-        print( '\t' * padding + f"{elem.attrib['var1']} = {elem.attrib['var2']};")
-        code_snippet += '\t' * padding + f"{elem.attrib['var1']} = {elem.attrib['var2']};" +  '\r\n' 
-    
-    if elem.tag == 'loop':
-        #for loop
-        if elem.attrib['type'] == 'for':
-            print( '\t' * padding + f"for({elem.attrib['iterVar']} = {elem.attrib['iterVal']}; {elem.attrib['iterVar']} { '<' if elem.attrib['inc'] == '++' else '>='} {elem.attrib['endVar']}; {elem.attrib['iterVar']}{elem.attrib['inc']})")
-            code_snippet += '\t' * padding + f"for({elem.attrib['iterVar']} = {elem.attrib['iterVal']}; {elem.attrib['iterVar']} { '<' if elem.attrib['inc'] == '++' else '>='} {elem.attrib['endVar']}; {elem.attrib['iterVar']}{elem.attrib['inc']})" +  '\r\n' 
 
-        #repeat loop
-        if elem.attrib['type'] == 'repeat':
-            print(padding * '\t' + "do")
-            code_snippet += padding * '\t' + "do" +  '\r\n' 
-            doWhilelines[padding] = f"}} while({elem.attrib['iterVar']} {elem.attrib['op']} {elem.attrib['endVar']});"
-            pandingBrackets.pop()
-        #while loop
-        if elem.attrib['type'] == 'while':
-            print( '\t' * padding + f"while({elem.attrib['condition']})")
-            code_snippet += '\t' * padding + f"while({elem.attrib['condition']})" +  '\r\n' 
-
-    
+        print(self.allVariables)
 
 
 
 
-    if elem.tag == 'if':
-        print( '\t' * padding + f"if({elem.attrib['condition']})")
-        code_snippet += '\t' * padding + f"if({elem.attrib['condition']})" +  '\r\n' 
+    def extractVariables(self,variables):
+        """Return a dictionary of all variables extracted from a string
+        """
+        
+        splitedVariables = re.split(r'[\s\[\]+\-\\*/\d]+',variables)
+        print(splitedVariables)
+        for variable in splitedVariables:
+            if variable.islower() and variable != '' and variable != 'true' and variable != 'false' and variable != 'div' and variable != 'mod':
+                if not variable in self.allVariables:
+                    self.allVariables[variable] = ''
+        return self.allVariables
 
-for idx,bracket in enumerate(pandingBrackets):
-    print((len(pandingBrackets) - 1 - idx) * '\t' + '}')
-    code_snippet += (len(pandingBrackets) - 1 - idx) * '\t' + '}' +  '\r\n' 
+
+    def appendToFile(self):
+        tree = ElementTree.parse("zadaci/sviZadaci.xml")
+        root = tree.getroot()
+        #self.prettify(root)
+        #root = ElementTree.Element("all-programs")
+        #print(self.prettify(root))
+        root.insert(0,self.allScopes[0])
+
+        mydata = ElementTree.tostring(root,'unicode', 'xml')
+        myfile = open("zadaci/sviZadaci.xml", "w")
+        myfile.write(mydata)
 
 
 
+
+
+'''
 doc = DocxTemplate("templates/one_program.docx")
 context = { 'code_snippet' : Listing(code_snippet) }
 doc.render(context)
 doc.save("generated_doc.docx")
+'''

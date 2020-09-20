@@ -138,10 +138,10 @@ a) n^2  (b) n^3/2 c) n logn
 i:= 1; 
 j:= n;
 repeat
-    j:= j -1;
+    j:= j - 1;
     k:= i;
-    m: = n;
-    while (k <= m) do 
+    m := n;
+    while k <= m do 
         begin
             m:= m div 2;
             k:= k + 1;
