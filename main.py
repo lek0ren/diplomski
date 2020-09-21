@@ -16,9 +16,9 @@ cgenerator = CGenerator('zadaci/sviZadaci.xml')
 cgenerator.generateC()
 
 
-
+'''
 btn=Button(window, text="This is Button widget", fg='blue')
 btn.place(x=80, y=100)
-window.title('Hello Python')
+window.title('Slozenost algoritma')
 window.geometry("800x600+10+20")
-window.mainloop()
+window.mainloop()'''
