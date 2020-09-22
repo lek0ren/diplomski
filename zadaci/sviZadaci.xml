@@ -1,18 +1,57 @@
 <all-programs>
-
-    <program answer="n^2" wrong="n^3" variables="{'n': '', 'i': '', 'j': '', 'k': '', 'm': ''}">
-        <loop type="for" iterVal="n" iterVar="i" endVar="2" inc="--" depth="0">
-            <loop type="for" iterVal="n -i + 2" iterVar="j" endVar="n" inc="++" depth="1">
-                <instruction var1="k" var2="n -i + 1" depth="2" />
-                <instruction var1="m" var2="j" depth="2" />
-                <loop type="repeat" depth="2" iterVar="m " op="&gt;" endVar=" k">
-                    <instruction var1="k" var2="k -1" depth="3" />
-                    <instruction var1="m" var2="m + 1" depth="3" />
-                </loop>
+    <program answer="n^2" wrong="n^4" variables="{'i': '', 'a': '', 'n': '', 'j': '', 's': '', 'k': '', 'm': ''}"><loop type="for" iterVal="1" iterVar="i" endVar="n" inc="++" depth="0"><instruction var1="k" var2="n" depth="1" /><loop type="for" iterVal="1" iterVar="j" endVar="i" inc="++" depth="1"><instruction var1="k" var2="k div 2 + n mod 2" depth="2" /></loop><loop type="for" iterVal="1" iterVar="j" endVar="k" inc="++" depth="1"><instruction var1="m" var2="1" depth="2" whileLoop="true" /><loop type="while" op="&lt;" iterVar="m" endVar="k " condition="m &lt;k " depth="2" inc="++" iterVal="1"><instruction var1="m" var2="m + 1" depth="3" /></loop></loop></loop></program><program answer="n^2" wrong="n * log(n)" variables="{'i': '', 'a': '', 'n': '', 'j': '', 's': ''}"><instruction var1="i" var2="0" depth="0" /><instruction var1="a" var2="n div 2" depth="0" /><loop type="while" op="&lt;" iterVar="i" endVar="n " condition="(i &lt;n) " depth="0"><if condition="i &lt; a" depth="1"><instruction var1="i" var2="i + 1" depth="2" /></if><else depth="1"><instruction var1="i" var2="i + 2" depth="2" /></else><loop type="for" iterVal="i" iterVar="j" endVar="a" inc="++" depth="1"><instruction var1="s" var2="s + j" depth="2" /></loop></loop></program><program answer="n" wrong="n^3" variables="{'n': '', 'i': '', 'k': '', 'j': '', 's': '', 'm': '', 'a': ''}">
+        <loop type="for" iterVal="1" iterVar="i" endVar="32" inc="++" depth="0">
+            <instruction var1="a[i]" var2="0" depth="1" />
+        </loop>
+        <loop type="for" iterVal="1" iterVar="i" endVar="n" inc="++" depth="0">
+            <instruction var1="j" var2="1" depth="1" whileLoop="true" />
+            <loop type="while" op="&lt;=" iterVar="j" endVar="32 and (a[j] &lt;&gt; 0 " condition="(j &lt;=32) and (a[j] &lt;&gt; 0) " depth="1" inc="++" iterVal="1">
+                <instruction var1="a[j]" var2="0" depth="2" />
+                <instruction var1="j" var2="j + 1" depth="2" />
+            </loop>
+            <if condition="j &lt;= 32" depth="1">
+                <instruction var1="a[j]" var2="1" depth="2" />
+            </if>
+        </loop>
+    </program>
+    <program answer="n * log(n)" wrong="n^3" variables="{'n': '', 'i': '', 'k': '', 'j': '', 's': '', 'm': ''}">
+        <instruction var1="k" var2="0" depth="0" />
+        <loop type="for" iterVal="1" iterVar="i" endVar="n" inc="++" depth="0">
+            <instruction var1="k" var2="k + 2" depth="1" />
+        </loop>
+        <loop type="for" iterVal="1" iterVar="i" endVar="k" inc="++" depth="0">
+            <instruction var1="m" var2="1" depth="1" whileLoop="true" />
+            <loop type="while" op="&lt;" iterVar="m" endVar="n " condition="(m &lt;n) " depth="1" inc="++" iterVal="1">
+                <instruction var1="m" var2="m + m" depth="2" />
             </loop>
         </loop>
     </program>
-    <program answer="n log n" wrong="n^2" variables="{'s': '', 'i': '', 'n': '', 'k': '', 'j': ''}">
+    <program answer="n * log(n)" wrong="n^2" variables="{'n': '', 'i': '', 'k': '', 'j': '', 's': '', 'm': ''}">
+        <instruction var1="i" var2="1" depth="0" />
+        <instruction var1="j" var2="n" depth="0" />
+        <loop type="repeat" depth="0" iterVar="i" op="&gt;=" endVar="j">
+            <instruction var1="j" var2="j - 1" depth="1" />
+            <instruction var1="k" var2="i" depth="1" whileLoop="true" />
+            <instruction var1="m" var2="n" depth="1" />
+            <loop type="while" op="&lt;=" iterVar="k" endVar="m " condition="k &lt;=m " depth="1" inc="++" iterVal="i">
+                <instruction var1="m" var2="m div 2" depth="2" />
+                <instruction var1="k" var2="k + 1" depth="2" />
+            </loop>
+            <instruction var1="i" var2="i + 1" depth="1" />
+        </loop>
+    </program>
+    <program answer="n^3/2" wrong="n^2" variables="{'n': '', 'i': '', 'k': '', 'j': '', 's': ''}">
+        <loop type="for" iterVal="n" iterVar="i" endVar="1" inc="--" depth="0">
+            <instruction var1="k" var2="0" depth="1" />
+            <instruction var1="j" var2="1" depth="1" whileLoop="true" />
+            <loop type="while" op="&lt;=" iterVar="j" endVar="n " condition="(j &lt;=n) " depth="1" inc="++" iterVal="1">
+                <instruction var1="k" var2="k + 1" depth="2" />
+                <instruction var1="j" var2="j + k" depth="2" />
+                <instruction var1="s" var2="s + i*j" depth="2" />
+            </loop>
+        </loop>
+    </program>
+    <program answer="n * log(n)" wrong="n^2" variables="{'i': '', 'j': '', 'k': '', 'n': '', 'c': '', 'd': '', 'p': '', 'm': '', 's': ''}">
         <instruction var1="s" var2="0" depth="0" />
         <loop type="for" iterVal="1" iterVar="i" endVar="n" inc="++" depth="0">
             <instruction var1="k" var2="1" depth="1" />
@@ -38,21 +77,7 @@
             </loop>
         </loop>
     </program>
-    <program answer="n" wrong="n^2" variables="{'i': '', 'j': '', 'k': '', 'n': '', 'c': '', 'd': ''}">
-        <instruction var1="i" var2="1" depth="0" whileLoop="true" />
-        <instruction var1="j" var2="1" depth="0" />
-        <instruction var1="k" var2="n" depth="0" />
-        <loop type="while" op="&lt;" iterVar="i" endVar="n " condition="i &lt;n " depth="0" inc="++" iterVal="1">
-            <instruction var1="i" var2="i + 1" depth="1" />
-            <instruction var1="c" var2="j * 2" depth="1" />
-            <instruction var1="d" var2="k / 2" depth="1" />
-            <loop type="while" op="&lt;" iterVar="j" endVar="k " condition="j &lt;k " depth="1">
-                <instruction var1="k" var2="k / 2" depth="2" />
-                <instruction var1="j" var2="j * 2" depth="2" />
-            </loop>
-        </loop>
-    </program>
-    <program answer="n^2" wrong="n^1 log n" variables="{'c': '', 's': '', 'i': '', 'n': '', 't': '', 'a': '', 'j': ''}">
+    <program answer="n" wrong="n^2" variables="{'c': '', 's': '', 'i': '', 'n': '', 't': '', 'a': '', 'j': ''}">
         <instruction var1="c" var2="1" depth="0" />
         <instruction var1="s" var2="true" depth="0" />
         <loop type="while" op="&lt;" iterVar="c" endVar="n and s " condition="(c &lt;n) and s " depth="0">
@@ -78,18 +103,15 @@
             </loop>
         </loop>
     </program>
-    <program answer="n" wrong="n^3" variables="{'i': '', 'a': '', 'n': '', 'j': ''}">
-        <loop type="for" iterVal="1" iterVar="i" endVar="32" inc="++" depth="0">
-            <instruction var1="a[i]" var2="0" depth="1" />
-            <loop type="for" iterVal="1" iterVar="i" endVar="n" inc="++" depth="1">
-                <instruction var1="j" var2="1" depth="2" whileLoop="true" />
-                <loop type="while" op="&lt;=" iterVar="j" endVar="32 and (a[j] &lt;&gt; 0 " condition="(j &lt;=32) and (a[j] &lt;&gt; 0) " depth="2" inc="++" iterVal="1">
-                    <instruction var1="a[j]" var2="0" depth="3" />
-                    <instruction var1="j" var2="j + 1" depth="3" />
+    <program answer="n^2" wrong="n^3" variables="{'n': '', 'i': '', 'j': '', 'k': '', 'm': ''}">
+        <loop type="for" iterVal="n" iterVar="i" endVar="2" inc="--" depth="0">
+            <loop type="for" iterVal="n -i + 2" iterVar="j" endVar="n" inc="++" depth="1">
+                <instruction var1="k" var2="n -i + 1" depth="2" />
+                <instruction var1="m" var2="j" depth="2" />
+                <loop type="repeat" depth="2" iterVar="m " op="&gt;" endVar=" k">
+                    <instruction var1="k" var2="k -1" depth="3" />
+                    <instruction var1="m" var2="m + 1" depth="3" />
                 </loop>
-                <if condition="j &lt;= 32" depth="2">
-                    <instruction var1="a[j]" var2="1" depth="3" />
-                </if>
             </loop>
         </loop>
     </program>

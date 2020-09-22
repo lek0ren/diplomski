@@ -26,6 +26,14 @@ class Parser:
         self.allScopes = [self.currentScope]
         self.allVariables = dict()
 
+
+    def resetAllScopes(self):
+        self.currentScope = Element("program")
+        self.allScopes = [self.currentScope]
+
+    def getCurrentProgram(self):
+        return self.allScopes[0]
+
     def parse(self):
         inpupFile = open("zadaci/" + self.filename, "r")
 
@@ -90,7 +98,7 @@ class Parser:
             #search for end
             matched = re.search(r'[eE]nd',line)
             if matched is not None:
-                print(f"1end of scope for {self.currentScope}")
+                print(self.allScopes)
                 self.allScopes.pop()
                 self.currentScope = self.allScopes[-1]
                 depth -= 1
@@ -157,6 +165,14 @@ class Parser:
                 self.currentScope = top
                 print(self.currentScope)
 
+                        #search for if statement
+            matched = re.search(r'else',line)
+            if matched is not None:
+                top = SubElement(self.currentScope,"else", {'depth': str(depth)})
+                depth += 1
+                self.allScopes.append(top)
+                self.currentScope = top
+
             #search for answer
             matched = re.search(r'answer:\s*(?P<answer>.+)',line)
             if matched is not None:
@@ -170,10 +186,13 @@ class Parser:
               '''  
             
         if self.allScopes[0].attrib['answer'] == 'n^' + str(numberOfLoops):
-            self.allScopes[0].attrib['wrong'] = 'n' + f"{'^' + str(numberOfLoops - 1) if numberOfLoops != 1 and numberOfLoops != 2 else ''}" + ' log n'
+            self.allScopes[0].attrib['wrong'] = 'n' + f"{'^' + str(numberOfLoops - 1) if numberOfLoops != 1 and numberOfLoops != 2 else ''}" + ' * log(n)'
         else:
             self.allScopes[0].attrib['wrong'] = 'n^' + str(numberOfLoops)
         print(self.allVariables)
+        self.allScopes[0].attrib['variables']= str(self.allVariables)
+        print(prettify(self.allScopes[0]))
+        self.currentScope = self.allScopes[0]
 
         
 
@@ -200,12 +219,12 @@ class Parser:
         #self.prettify(root)
         #root = ElementTree.Element("all-programs")
         #print(self.prettify(root))
-        self.allScopes[0].attrib['variables']= self.allVariables
         root.insert(0,self.allScopes[0])
 
         mydata = ElementTree.tostring(root,'unicode', 'xml')
         myfile = open("zadaci/sviZadaci.xml", "w")
         myfile.write(mydata)
+        myfile.close()
 
 
 

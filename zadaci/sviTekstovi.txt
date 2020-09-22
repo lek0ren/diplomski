@@ -5,11 +5,9 @@ begin
         k := n -i + 1;
         m := j;
         repeat
-            begin
                 k := k -1;
                 m := m + 1;
                 until m > k;
-            end;
     end;
 end
 a) n^3 b) n^5/2 (c) n^2
@@ -172,7 +170,9 @@ end;
 
 
 for i := 1 to 32 do 
+begin
     a[i] := 0;
+end
 for i := 1 to n do 
     begin   
         j := 1;   
@@ -182,20 +182,26 @@ for i := 1 to n do
                 j := j + 1;   
             end;   
         if j <= 32 then 
+        begin
             a[j] := 1; 
+        end
     end;
 
 a) 2^n  b) n^2 (c) n   sept 2018.
 
-
+----ovde
 i := 0; 
 a:= n div 2; 
 while(i < n) do 
     begin   
         if(i < a) then 
-            i := i + 1   
+        begin
+            i := i + 1
+        end
         else 
-            i := i + 2;   
+        begin
+            i := i + 2;
+        end  
         for j := i to a do 
             s := s + j; 
     end;
@@ -208,12 +214,16 @@ for i := 1 to n do
     begin
         k := n;
         for j := 1 to i do
+            begin
             k := k div 2 + n mod 2;
+            end
         for j := 1 to k do 
             begin
                 m := 1;
                 while m < k do 
+                begin
                     m := m + 1;
+                end
             end;
     end;
 

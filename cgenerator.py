@@ -32,17 +32,26 @@ class CGenerator:
     def __init__(self, filename):
         self.filename = filename
         self.allVariables = []
+        self.program = None
+        self.answers = ''
+        self.allAnswers = ["n","n * log(n)","n^2","n^2 * log(n)","n^3","n!","log(n!)","log(n)","sqrt(n)", "n^3/2"]
+
+    def setProgram(self, program):
+        self.program = program
+
+    def getAnswers(self):
+            return self.answers
+
+    def setRandomProgram(self):
+        tree = ElementTree.parse(self.filename)
+        root = tree.getroot()   
+        randNum = random.randint(0, len(root) - 1)
+        self.program = root[randNum]
 
     def generateC(self):
-        tree = ElementTree.parse(self.filename)
+        self.answers = ''
 
-        root = tree.getroot()
-        
-        randNum = random.randint(0, len(root) - 1)
-
-        print(randNum)
-
-        tree = ElementTree.ElementTree(root[randNum])
+        tree = ElementTree.ElementTree(self.program)
 
         tree.getroot().attrib['variables'] = tree.getroot().attrib['variables'].replace("'", '"').replace('u"', '"')
 
@@ -118,34 +127,34 @@ class CGenerator:
         #printing in c
         for elem in tree.iter():
             lastPadding = padding
-            if elem.tag == 'instruction' or elem.tag == 'instruction' or elem.tag == 'if':
+            if elem.tag != 'program':
                 padding = int(elem.attrib['depth'])
 
 
-                if padding > lastPadding:
-                    curlyBracket = '{'
-                    print( '\t' * (padding - 1) + curlyBracket)
-                    code_snippet += '\t' * (padding - 1) + curlyBracket + '\r\n'
-                    if loopIteration != '':
-                        print( '\t' * padding + loopIteration)
-                        code_snippet += '\t' * padding + loopIteration +  '\r\n'
-                        loopIteration = ''
-                    pandingBrackets.append('}')
-                elif padding < lastPadding:
-                    if doWhilelines.get(padding) is not None:
-                        print('\t' * padding + doWhilelines[padding])
-                        code_snippet += '\t' * padding + doWhilelines[padding] + '\r\n'
-                    curlyBracket = '}'
-                else:
-                    curlyBracket = ''
+            if padding > lastPadding:
+                curlyBracket = '{'
+                print( '\t' * (padding - 1) + curlyBracket)
+                code_snippet += '\t' * (padding - 1) + curlyBracket + '\r\n'
+                if loopIteration != '':
+                    print( '\t' * padding + loopIteration)
+                    code_snippet += '\t' * padding + loopIteration +  '\r\n'
+                    loopIteration = ''
+                pandingBrackets.append('}')
+            elif padding < lastPadding:
+                if doWhilelines.get(padding) is not None:
+                    print('\t' * padding + doWhilelines[padding])
+                    code_snippet += '\t' * padding + doWhilelines[padding] + '\r\n'
+                curlyBracket = '}'
+            else:
+                curlyBracket = ''
 
-                if curlyBracket == '}':
-                    if doWhilelines.get(padding) is not None:
-                        doWhilelines.pop(padding)
-                    else:
-                        print( '\t' * (lastPadding -  1) + '}')
-                        code_snippet += '\t' * (lastPadding -  1) + '}' +  '\r\n' 
-                        pandingBrackets.pop()
+            if curlyBracket == '}':
+                if doWhilelines.get(padding) is not None:
+                    doWhilelines.pop(padding)
+                else:
+                    print( '\t' * (lastPadding -  1) + '}')
+                    code_snippet += '\t' * (lastPadding -  1) + '}' +  '\r\n' 
+                    pandingBrackets.pop()
                 
             #instruction
             if elem.tag == 'instruction':
@@ -194,10 +203,14 @@ class CGenerator:
                 print( '\t' * padding + f"if({elem.attrib['condition']})")
                 code_snippet += '\t' * padding + f"if({elem.attrib['condition']})" +  '\r\n' 
 
+            if elem.tag == 'else':
+                print( '\t' * padding + f"else")
+                code_snippet += '\t' * padding + f"else" +  '\r\n' 
 
-        if doWhilelines.get(0) is not None:
-            print(doWhilelines[0])
-            code_snippet += doWhilelines[0] + '\r\n'
+
+        for doWhile in  doWhilelines:
+            print('\t' * doWhile + doWhilelines[doWhile])
+            code_snippet += '\t' * doWhile + doWhilelines[doWhile] + '\r\n'
             pandingBrackets.pop()
 
         for idx,bracket in enumerate(pandingBrackets):
@@ -206,4 +219,15 @@ class CGenerator:
 
         print('Answer:\t' + tree.getroot().attrib['answer'])
         print('Wrong:\t' + tree.getroot().attrib['wrong'])
+
+        self.answers += 'Tacan odgovor:\t' + tree.getroot().attrib['answer'] +  '\r\n' 
+        self.answers += 'Pogresan odgovor:\t' + tree.getroot().attrib['wrong'] +  '\r\n' 
+
+        falseAnswer = self.allAnswers[random.randint(0, len(self.allAnswers)) - 1]
+        while falseAnswer == tree.getroot().attrib['wrong'] or falseAnswer == tree.getroot().attrib['answer']:
+            falseAnswer = self.allAnswers[random.randint(0, len(self.allAnswers) - 1)]
+        
+        self.answers += 'Pogresan odgovor:\t' + falseAnswer +  '\r\n' 
+
+        return code_snippet
         
