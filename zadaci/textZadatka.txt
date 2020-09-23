@@ -1,17 +1,18 @@
+for i := 1 to 32 do 
+begin
+    a[i] := 0;
+end
 for i := 1 to n do 
-    begin
-        k := n;
-        for j := 1 to i do
-            begin
-            k := k div 2 + n mod 2;
-            end
-        for j := 1 to k do 
-            begin
-                m := 1;
-                while m < k do 
-                begin
-                    m := m + 1;
-                end
-            end;
+    begin   
+        j := 1;   
+        while (j <= 32) and (a[j] <> 0) do 
+            begin    
+                a[j] := 0;          
+                j := j + 1;   
+            end;   
+        if j <= 32 then 
+        begin
+            a[j] := 1; 
+        end
     end;
-answer:n^2
+answer:n

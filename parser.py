@@ -165,7 +165,7 @@ class Parser:
                 self.currentScope = top
                 print(self.currentScope)
 
-                        #search for if statement
+            #search for if statement
             matched = re.search(r'else',line)
             if matched is not None:
                 top = SubElement(self.currentScope,"else", {'depth': str(depth)})

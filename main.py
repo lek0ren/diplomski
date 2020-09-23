@@ -23,6 +23,8 @@ class GUI:
     generatedCodeLayout = QGridLayout()
     generatedCode = QTextEdit()
 
+    question = 'Pretpostaviti da su sve promenljive tipa int. Koja je slozenost datog algoritma?\n\n\n'
+
 
     def __init__(self):
         self.window.setGeometry(200,200,1200,800)
@@ -52,6 +54,7 @@ class GUI:
 
         self.generatedCodeLayout.addWidget(QLabel("Generisan C kod"))
         self.generatedCodeLayout.addWidget(self.generatedCode,1,0,13,13)
+        self.generatedCode.setTabStopWidth(self.generatedCode.fontMetrics().width(' ') * 8)
         
 
         self.newCodeWindow.setLayout(self.newCodeLayout)
@@ -73,11 +76,13 @@ class GUI:
         parser.parse()
         print("Writing to file")
         parser.appendToFile()
+        self.PascalToCClicked()
 
     def generateRandomClicked(self):
         cgenerator.setRandomProgram()
         genCode_snippet = cgenerator.generateC()
-        self.generatedCode.setText(genCode_snippet)
+        self.generatedCode.setText(self.question)
+        self.generatedCode.append(genCode_snippet)
         self.generatedCode.append(cgenerator.getAnswers())
 
     def PascalToCClicked(self):
@@ -85,15 +90,10 @@ class GUI:
         parser.parse()
         cgenerator.setProgram(parser.getCurrentProgram())
         genCode_snippet = cgenerator.generateC()
-        self.generatedCode.setText(genCode_snippet)
+        self.generatedCode.setText(self.question)
+        self.generatedCode.append(genCode_snippet)
         self.generatedCode.append(cgenerator.getAnswers())
 
 gui = GUI()
 gui.display()
 
-'''
-btn=Button(window, text="This is Button widget", fg='blue')
-btn.place(x=80, y=100)
-window.title('Slozenost algoritma')
-window.geometry("800x600+10+20")
-window.mainloop()'''

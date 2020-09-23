@@ -189,8 +189,8 @@ class CGenerator:
                     if random.randint(0,2) == 0 or 'inc' not in elem.attrib: 
                         print('\t' * padding + whileLoopIteration)
                         code_snippet += '\t' * padding + whileLoopIteration + '\r\n'
-                        print( '\t' * padding + f"while({elem.attrib['iterVar']} { elem.attrib['op']} {elem.attrib['endVar']})")
-                        code_snippet += '\t' * padding + f"while({elem.attrib['iterVar']} { elem.attrib['op']} {elem.attrib['endVar']})" +  '\r\n' 
+                        print( '\t' * padding + f"while({elem.attrib['condition']})")
+                        code_snippet += '\t' * padding + f"while({elem.attrib['condition']})" +  '\r\n' 
                     else:
                         print( '\t' * padding + f"for({whileLoopIteration} {elem.attrib['condition']}; {elem.attrib['iterVar']}{elem.attrib['inc']})")
                         code_snippet += '\t' * padding + f"for({whileLoopIteration} {elem.attrib['condition']} ; {elem.attrib['iterVar']}{elem.attrib['inc']})" +  '\r\n' 
