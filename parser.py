@@ -1,4 +1,3 @@
-from docxtpl import DocxTemplate, Listing
 import re
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring
 from xml.etree import ElementTree
@@ -231,8 +230,5 @@ class Parser:
 
 
 '''
-doc = DocxTemplate("templates/one_program.docx")
-context = { 'code_snippet' : Listing(code_snippet) }
-doc.render(context)
-doc.save("generated_doc.docx")
+
 '''

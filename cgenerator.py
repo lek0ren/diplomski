@@ -134,16 +134,16 @@ class CGenerator:
             if padding > lastPadding:
                 curlyBracket = '{'
                 print( '\t' * (padding - 1) + curlyBracket)
-                code_snippet += '\t' * (padding - 1) + curlyBracket + '\r\n'
+                code_snippet += '    ' * (padding - 1) + curlyBracket + '\r\n'
                 if loopIteration != '':
                     print( '\t' * padding + loopIteration)
-                    code_snippet += '\t' * padding + loopIteration +  '\r\n'
+                    code_snippet += '    ' * padding + loopIteration +  '\r\n'
                     loopIteration = ''
                 pandingBrackets.append('}')
             elif padding < lastPadding:
                 if doWhilelines.get(padding) is not None:
                     print('\t' * padding + doWhilelines[padding])
-                    code_snippet += '\t' * padding + doWhilelines[padding] + '\r\n'
+                    code_snippet += '    ' * padding + doWhilelines[padding] + '\r\n'
                 curlyBracket = '}'
             else:
                 curlyBracket = ''
@@ -153,8 +153,12 @@ class CGenerator:
                     doWhilelines.pop(padding)
                 else:
                     print( '\t' * (lastPadding -  1) + '}')
-                    code_snippet += '\t' * (lastPadding -  1) + '}' +  '\r\n' 
+                    code_snippet += '    ' * (lastPadding -  1) + '}' +  '\r\n' 
                     pandingBrackets.pop()
+                    if len(pandingBrackets) > 0 and padding == 0:
+                        print('}')
+                        code_snippet += '}' +  '\r\n' 
+                        pandingBrackets.pop()
                 
             #instruction
             if elem.tag == 'instruction':
@@ -162,38 +166,38 @@ class CGenerator:
                     whileLoopIteration = f"{elem.attrib['var1']} = {elem.attrib['var2']};"
                 else:
                     print( '\t' * padding + f"{elem.attrib['var1']} = {elem.attrib['var2']};")
-                    code_snippet += '\t' * padding + f"{elem.attrib['var1']} = {elem.attrib['var2']};" +  '\r\n' 
+                    code_snippet += '    ' * padding + f"{elem.attrib['var1']} = {elem.attrib['var2']};" +  '\r\n' 
             
             if elem.tag == 'loop':
                 #for loop
                 if elem.attrib['type'] == 'for':
                     if random.randint(0,2) == 0:
                         print( '\t' * padding + f"for({elem.attrib['iterVar']} = {elem.attrib['iterVal']}; {elem.attrib['iterVar']} { '<' if elem.attrib['inc'] == '++' else '>='} {elem.attrib['endVar']}; {elem.attrib['iterVar']}{elem.attrib['inc']})")
-                        code_snippet += '\t' * padding + f"for({elem.attrib['iterVar']} = {elem.attrib['iterVal']}; {elem.attrib['iterVar']} { '<' if elem.attrib['inc'] == '++' else '>='} {elem.attrib['endVar']}; {elem.attrib['iterVar']}{elem.attrib['inc']})" +  '\r\n' 
+                        code_snippet += '    ' * padding + f"for({elem.attrib['iterVar']} = {elem.attrib['iterVal']}; {elem.attrib['iterVar']} { '<' if elem.attrib['inc'] == '++' else '>='} {elem.attrib['endVar']}; {elem.attrib['iterVar']}{elem.attrib['inc']})" +  '\r\n' 
                     else: 
                         print( '\t' * padding + f"{elem.attrib['iterVar']} = {elem.attrib['iterVal']};")
-                        code_snippet += '\t' * padding + f"{elem.attrib['iterVar']} = {elem.attrib['iterVal']};" +  '\r\n'
+                        code_snippet += '    ' * padding + f"{elem.attrib['iterVar']} = {elem.attrib['iterVal']};" +  '\r\n'
                         print( '\t' * padding + f"while({elem.attrib['iterVar']} { '<' if elem.attrib['inc'] == '++' else '>='} {elem.attrib['endVar']})")
-                        code_snippet += '\t' * padding + f"while({elem.attrib['iterVar']} { '<' if elem.attrib['inc'] == '++' else '>='} {elem.attrib['endVar']})" +  '\r\n'
+                        code_snippet += '    ' * padding + f"while({elem.attrib['iterVar']} { '<' if elem.attrib['inc'] == '++' else '>='} {elem.attrib['endVar']})" +  '\r\n'
                         loopIteration = f"{elem.attrib['iterVar']}{elem.attrib['inc']};" 
 
 
                 #repeat loop
                 if elem.attrib['type'] == 'repeat':
                     print(padding * '\t' + "do")
-                    code_snippet += padding * '\t' + "do" +  '\r\n' 
+                    code_snippet += padding * '    ' + "do" +  '\r\n' 
                     doWhilelines[padding] = f"}} while({elem.attrib['iterVar']} {elem.attrib['op']} {elem.attrib['endVar']});"
                     #pandingBrackets.pop()
                 #while loop
                 if elem.attrib['type'] == 'while':
                     if random.randint(0,2) == 0 or 'inc' not in elem.attrib: 
                         print('\t' * padding + whileLoopIteration)
-                        code_snippet += '\t' * padding + whileLoopIteration + '\r\n'
+                        code_snippet += '    ' * padding + whileLoopIteration + '\r\n'
                         print( '\t' * padding + f"while({elem.attrib['condition']})")
-                        code_snippet += '\t' * padding + f"while({elem.attrib['condition']})" +  '\r\n' 
+                        code_snippet += '    ' * padding + f"while({elem.attrib['condition']})" +  '\r\n' 
                     else:
                         print( '\t' * padding + f"for({whileLoopIteration} {elem.attrib['condition']}; {elem.attrib['iterVar']}{elem.attrib['inc']})")
-                        code_snippet += '\t' * padding + f"for({whileLoopIteration} {elem.attrib['condition']} ; {elem.attrib['iterVar']}{elem.attrib['inc']})" +  '\r\n' 
+                        code_snippet += '    ' * padding + f"for({whileLoopIteration} {elem.attrib['condition']} ; {elem.attrib['iterVar']}{elem.attrib['inc']})" +  '\r\n' 
             
 
 
@@ -201,21 +205,21 @@ class CGenerator:
 
             if elem.tag == 'if':
                 print( '\t' * padding + f"if({elem.attrib['condition']})")
-                code_snippet += '\t' * padding + f"if({elem.attrib['condition']})" +  '\r\n' 
+                code_snippet += '    ' * padding + f"if({elem.attrib['condition']})" +  '\r\n' 
 
             if elem.tag == 'else':
                 print( '\t' * padding + f"else")
-                code_snippet += '\t' * padding + f"else" +  '\r\n' 
+                code_snippet += '    ' * padding + f"else" +  '\r\n' 
 
 
         for doWhile in  doWhilelines:
             print('\t' * doWhile + doWhilelines[doWhile])
-            code_snippet += '\t' * doWhile + doWhilelines[doWhile] + '\r\n'
+            code_snippet += '    ' * doWhile + doWhilelines[doWhile] + '\r\n'
             pandingBrackets.pop()
 
         for idx,bracket in enumerate(pandingBrackets):
             print((len(pandingBrackets) - 1 - idx) * '\t' + bracket)
-            code_snippet += (len(pandingBrackets) - 1 - idx) * '\t' + bracket +  '\r\n' 
+            code_snippet += (len(pandingBrackets) - 1 - idx) * '    ' + bracket +  '\r\n' 
 
         print('Answer:\t' + tree.getroot().attrib['answer'])
         print('Wrong:\t' + tree.getroot().attrib['wrong'])

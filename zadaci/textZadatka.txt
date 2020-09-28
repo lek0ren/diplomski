@@ -15,4 +15,9 @@ for i := 1 to n do
             a[j] := 1; 
         end
     end;
+ i := 5;
+repeat
+     i := i + 1;
+     a[i] := i + 3;
+until i < n ;
 answer:n
